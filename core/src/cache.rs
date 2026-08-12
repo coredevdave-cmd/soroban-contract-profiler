@@ -17,6 +17,16 @@ struct CacheEntry<T> {
     timestamp: u64,
 }
 
+/// Two-level simulation result cache.
+///
+/// - **L1**: an in-process [`moka`] LRU cache with a 1-hour TTL and a cap of
+///   1 000 entries. L1 lookups are sub-microsecond.
+/// - **L2**: a [`sled`] embedded key-value store that persists results across
+///   process restarts. L2 is consulted on an L1 miss and its hit populates L1
+///   so subsequent accesses are fast.
+///
+/// Hit and miss counts are tracked with atomic counters and exposed via
+/// [`SimulationCache::stats`] for observability.
 pub struct SimulationCache {
     l1: Cache<String, SimulationResult>,
     l2: Tree,
@@ -25,6 +35,11 @@ pub struct SimulationCache {
 }
 
 impl SimulationCache {
+    /// Create a new `SimulationCache` backed by `db`.
+    ///
+    /// Opens (or creates) the `"simulation_results"` sled tree inside `db`.
+    /// Returns an `Arc` so the cache can be shared across async tasks without
+    /// cloning the underlying storage.
     pub fn new(db: &Db) -> Arc<Self> {
         let l1 = Cache::builder()
             .max_capacity(CACHE_MAX_CAPACITY)
