@@ -28,36 +28,51 @@ use thiserror::Error;
 use tokio_util::sync::CancellationToken;
 use utoipa::ToSchema;
 
-/// Errors that can occur during simulation
+/// All errors that can be produced by the simulation layer.
+///
+/// Variants cover the full failure surface: I/O, network, XDR de/serialisation,
+/// contract validation, and argument parsing. [`AppError`](crate::errors::AppError)
+/// implements `From<SimulationError>` and maps each variant to an appropriate HTTP
+/// status code.
 #[derive(Error, Debug)]
 pub enum SimulationError {
+    /// A file system I/O error (e.g. reading a `.wasm` file from disk).
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// The Stellar RPC endpoint returned a non-success HTTP response.
     #[error("RPC request failed: {0}")]
     RpcRequestFailed(String),
 
+    /// The RPC endpoint did not respond within the configured timeout.
     #[error("RPC node timeout")]
     NodeTimeout,
 
+    /// The RPC node returned a JSON error payload (e.g. invalid contract ID).
     #[error("Node returned an error: {0}")]
     NodeError(String),
 
+    /// JSON serialisation or deserialisation of an RPC payload failed.
     #[error("Serialization error: {0}")]
     SerializationError(#[from] serde_json::Error),
 
+    /// A network-level error from the underlying HTTP client.
     #[error("Network error: {0}")]
     NetworkError(#[from] reqwest::Error),
 
+    /// Base64 decoding of an XDR envelope failed.
     #[error("Base64 decode error: {0}")]
     Base64Error(#[from] base64::DecodeError),
 
+    /// XDR deserialisation of a Soroban type failed.
     #[error("XDR decode error: {0}")]
     XdrError(String),
 
+    /// The supplied contract address or Wasm blob is not a valid Soroban contract.
     #[error("Invalid contract: {0}")]
     InvalidContract(String),
 
+    /// Argument parsing from JSON to `ScVal` XDR failed.
     #[error("Parse error: {0}")]
     ParseError(#[from] crate::parser::ParserError),
 
