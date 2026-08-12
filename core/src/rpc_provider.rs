@@ -27,12 +27,32 @@ const MIN_PROVIDER_SCORE: i64 = 25;
 const MAX_GOSSIP_PROVIDERS: usize = 64;
 const MAX_GOSSIP_PEERS: usize = 64;
 
+/// Configuration for a single Stellar RPC endpoint.
+///
+/// Providers are registered in `soroscope.toml` or via the `SOROSCOPE_RPC_ENDPOINT`
+/// environment variable. The registry selects among multiple providers using a
+/// latency-weighted round-robin algorithm (see [`crate::routing`]).
+///
+/// # Example (soroscope.toml)
+///
+/// ```toml
+/// [[rpc.providers]]
+/// name    = "mainnet-primary"
+/// url     = "https://mainnet.stellar.validationcloud.io/v1/MY_KEY"
+/// auth_header = "X-API-Key"
+/// auth_value  = "MY_KEY"
+/// advertise   = false   # do not share this endpoint with peers
+/// ```
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct RpcProvider {
+    /// Display name shown in health dashboards and logs.
     pub name: String,
+    /// Full HTTP(S) URL of the RPC endpoint.
     pub url: String,
+    /// Optional HTTP header name used for authentication (e.g. `"Authorization"`).
     #[serde(default)]
     pub auth_header: Option<String>,
+    /// Value for the authentication header (e.g. a Bearer token or API key).
     #[serde(default)]
     pub auth_value: Option<String>,
     /// Controls whether this provider can be advertised to peer nodes.
