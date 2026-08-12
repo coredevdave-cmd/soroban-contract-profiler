@@ -1,0 +1,65 @@
+# deny.toml — cargo-deny configuration
+# https://embarkstudios.github.io/cargo-deny/
+
+[graph]
+# Only check dependencies for the default target triple
+targets = [
+  { triple = "x86_64-unknown-linux-gnu" },
+  { triple = "aarch64-unknown-linux-gnu" },
+  { triple = "wasm32-unknown-unknown" },
+]
+
+# ── Advisories ────────────────────────────────────────────────────────────────
+[advisories]
+# Deny crates with unpatched security advisories
+vulnerability = "deny"
+unmaintained = "warn"
+yanked = "warn"
+notice = "warn"
+
+# Known ignored advisories (add only with justification):
+# ignore = []
+
+# ── Licenses ──────────────────────────────────────────────────────────────────
+[licenses]
+# Only allow OSI-approved permissive and copyleft licences
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Unicode-DFS-2016",
+  "CC0-1.0",
+  "MPL-2.0",
+]
+deny = [
+  "GPL-2.0",
+  "GPL-3.0",
+  "AGPL-3.0",
+]
+copyleft = "warn"
+# Treat unlicensed crates as an error
+unlicensed = "deny"
+
+# ── Bans ──────────────────────────────────────────────────────────────────────
+[bans]
+# Deny multiple versions of the same crate to keep the dependency tree clean
+multiple-versions = "warn"
+wildcards = "warn"
+highlight = "all"
+
+# Crates that are explicitly allowed to have multiple versions because
+# the ecosystem has not yet converged:
+skip = [
+  { name = "syn" },
+  { name = "bitflags" },
+]
+
+# ── Sources ───────────────────────────────────────────────────────────────────
+[sources]
+# Only allow crates from crates.io and this repository
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
