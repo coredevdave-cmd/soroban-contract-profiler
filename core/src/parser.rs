@@ -6,9 +6,11 @@ use soroban_sdk::xdr::{
 use stellar_strkey::Strkey;
 use thiserror::Error;
 
+/// Errors that can occur while converting JSON invocation arguments to Soroban XDR values.
 #[derive(Error, Debug)]
 #[allow(clippy::enum_variant_names)]
 pub enum ParserError {
+    /// A JSON value at `location` had an unexpected type.
     #[error("Invalid JSON type at {location}: expected {expected}, found {found}")]
     InvalidType {
         location: String,
@@ -16,13 +18,20 @@ pub enum ParserError {
         found: String,
     },
 
+    /// A string that should be a Soroban symbol contained invalid characters.
     #[error("Invalid symbol at {location}: {details}")]
     InvalidSymbol { location: String, details: String },
 
+    /// A hex-encoded byte string was malformed.
     #[error("Invalid hex bytes at {location}: {details}")]
     InvalidHex { location: String, details: String },
 }
 
+/// Parses JSON-encoded Soroban contract invocation arguments into [`ScVal`] XDR values.
+///
+/// The parser supports all primitive Soroban types (void, bool, i64, u64, strings,
+/// symbols, addresses) and compound types (vecs, maps). Addresses are detected by their
+/// Stellar strkey prefix (`G…` for accounts, `C…` for contracts).
 pub struct ArgParser;
 
 impl ArgParser {
