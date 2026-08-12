@@ -9,18 +9,26 @@ use utoipa::ToSchema;
 
 use crate::simulation::SimulationError;
 
+/// Top-level application error type.
+///
+/// Each variant maps to an HTTP status code via [`IntoResponse`] and produces
+/// a JSON body of the form `{"error": "...", "message": "..."}`.
 #[derive(Error, Debug)]
 #[allow(dead_code)]
 pub enum AppError {
+    /// An unexpected server-side failure. Returns HTTP 500.
     #[error("Internal server error")]
     Internal(String),
 
+    /// The requested resource could not be found. Returns HTTP 404.
     #[error("Not found: {0}")]
     NotFound(String),
 
+    /// The request was malformed or contained invalid parameters. Returns HTTP 400.
     #[error("Bad request: {0}")]
     BadRequest(String),
 
+    /// The caller is not authenticated or the token is invalid. Returns HTTP 401.
     #[error("Unauthorized: {0}")]
     Unauthorized(String),
 }
