@@ -7,6 +7,20 @@ use soroban_sdk::{testutils::Address as _, Address, Env, IntoVal, String, Symbol
 use std::fs;
 use std::path::PathBuf;
 
+/// Run a CPU and memory benchmark against a compiled token contract.
+///
+/// Loads the Wasm binary at `wasm_path`, registers it in an in-process Soroban
+/// environment, and then measures the instruction and memory cost of `initialize`,
+/// `mint`, and `transfer` invocations.
+///
+/// Results are printed to stdout in a human-readable table. This function is
+/// primarily used by the `soroscope benchmark` subcommand and the benchmark
+/// scripts in `scripts/`.
+///
+/// # Errors
+///
+/// Returns an error if the Wasm file cannot be read or if contract registration
+/// or invocation fails.
 pub async fn run_token_benchmark(
     wasm_path: PathBuf,
     simulation_service: &SimulationService,
