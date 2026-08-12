@@ -2,26 +2,46 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use utoipa::ToSchema;
 
+/// A single actionable suggestion for reducing contract gas cost.
+///
+/// Each suggestion identifies a specific Wasm bytecode pattern that is known
+/// to inflate instruction count or memory usage, and proposes a fix with an
+/// estimated gas saving.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GasGolfingSuggestion {
+    /// Category of the detected pattern (e.g. `"loop"`, `"memory"`, `"storage"`).
     pub pattern_type: String,
+    /// Human-readable description of the inefficiency.
     pub description: String,
-    pub location: Option<String>, // WASM offset or function name
-    pub severity: String, // "low", "medium", "high"
+    /// Wasm byte offset or exported function name where the pattern was found.
+    pub location: Option<String>,
+    /// Severity: `"low"`, `"medium"`, or `"high"`.
+    pub severity: String,
+    /// Estimated instruction units saved if the fix is applied, when computable.
     pub gas_saved_estimate: Option<u64>,
+    /// Prose description of the recommended change.
     pub suggested_fix: String,
+    /// Optional before/after Rust code snippet illustrating the fix.
     pub code_example: Option<String>,
 }
 
+/// Aggregated result of a gas-golfing analysis run on a single contract.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct GasGolfingReport {
+    /// Name of the analysed contract (derived from the Wasm export section).
     pub contract_name: String,
+    /// Unix timestamp (seconds) when the analysis was performed.
     pub analysis_timestamp: u64,
+    /// Total number of suggestions across all pattern categories.
     pub total_suggestions: usize,
+    /// Individual suggestions, ordered by descending estimated gas saving.
     pub suggestions: Vec<GasGolfingSuggestion>,
-    pub summary: HashMap<String, usize>, // pattern_type -> count
+    /// Count of suggestions grouped by `pattern_type`.
+    pub summary: HashMap<String, usize>,
 }
 
+/// Wasm bytecode analyser that detects gas-inefficient patterns and produces
+/// [`GasGolfingReport`]s with actionable optimisation suggestions.
 pub struct GasGolfingAnalyzer;
 
 impl GasGolfingAnalyzer {
