@@ -8,6 +8,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::Arc;
+use std::time::Duration;
 
 #[derive(Parser)]
 struct Args {
@@ -79,7 +80,11 @@ async fn main() {
     
     let state = Arc::new(AppState {
         rpc_url: args.rpc_url,
-        client: reqwest::Client::new(),
+        client: reqwest::Client::builder()
+            .connect_timeout(Duration::from_secs(3))
+            .timeout(Duration::from_secs(15))
+            .build()
+            .expect("valid RPC client configuration"),
         config: Config::default(),
     });
     
@@ -180,7 +185,7 @@ async fn handle_rpc(
                         let gas_used = gas_body
                             .get("result")
                             .and_then(|r| r.as_str())
-                            .and_then(|s| u64::from_str_radix(&s[2..], 16).ok())
+                            .and_then(parse_hex_u64)
                             .unwrap_or(0);
                         
                         if gas_used > state.config.max_gas_limit {
@@ -237,4 +242,15 @@ async fn handle_rpc(
             })
         }
     }
+}
+
+/// Parse a JSON-RPC quantity without slicing blindly. Upstream providers may
+/// return either a conventional `0x` quantity or a malformed value; malformed
+/// data must not be able to panic the proxy process.
+fn parse_hex_u64(value: &str) -> Option<u64> {
+    let digits = value.strip_prefix("0x").or_else(|| value.strip_prefix("0X"))?;
+    if digits.is_empty() {
+        return None;
+    }
+    u64::from_str_radix(digits, 16).ok()
 }
